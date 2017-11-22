@@ -79,6 +79,13 @@ public class User {
 	            PrivateKey prk = userKey.getPrivate();
 	            PublicKey puk = userKey.getPublic();
 	            
+	            	//genero la chiave simmetrica AES dello user
+	            SecureRandom random = new SecureRandom();
+	            		byte aesKey[] = new byte[16];
+	            		random.nextBytes(aesKey);
+	            		SecretKey secretAESKey = new SecretKeySpec(aesKey, 0, aesKey.length, "AES");
+	            		
+	            
 	            //genero la firma per l'utente                       
 	            KeyPairGenerator signKey = KeyPairGenerator.getInstance("DSA");
 	            keyPairGenerator.initialize(1024, new SecureRandom());
@@ -97,14 +104,13 @@ public class User {
 	                
 	                PrintStream scrivi = new PrintStream(kFile);
 	                
-	                //organizzo chiavi nel keyring
+	                //organizzo chiavi nel keyring - base64
 	                byte[] arr = prk.getEncoded();
 	                String encodedKey = Base64.getEncoder().encodeToString(arr);
 	                scrivi.print(encodedKey);
 	                           
 	                byte[] arr2 = puk.getEncoded();
 	                String encodedKey2 = Base64.getEncoder().encodeToString(arr2);
-	                
 	                scrivi.print("," + encodedKey2);
 	                
 	                byte[] arr3 = userSignKeyPr.getEncoded();
@@ -115,11 +121,13 @@ public class User {
 	                String encodedsignKey4 = Base64.getEncoder().encodeToString(arr4);
 	                scrivi.print("," + encodedsignKey4);
 	                
+	                byte[] arr5 = secretAESKey.getEncoded();
+	                String encodedAESKey = Base64.getEncoder().encodeToString(arr5);
+	                scrivi.print("," + encodedAESKey);
+	                
 	                //cripta file
 	                encryptFile.main(this.keyRing, password);
-	                
-	                
-	         
+	               
 	                
 	            } catch (FileNotFoundException ex) {
 	                Logger.getLogger(user.getClass().getName()).log(Level.SEVERE, null, ex);
@@ -140,13 +148,10 @@ public class User {
 	    public char[] getPrKey(String password) throws Exception{
 	    		//apro il keyring con la password
 	    		String decryptedFilename = this.unlock(password);
-	    		
-	    		
+
 	        char[] arrPrKey = new char[5000];
 	        int i=0;
 	        
-	        
-	       
 	        FileReader filein = null;
 	        int next = 0;
 	        try {
@@ -361,5 +366,54 @@ public class User {
 	        return arrSignPubKey;
 	        
 	    }
+	    
+	    public char[] getSymmetricKey(String password) throws Exception{
+    		String decryptedFile = this.unlock(password);
+        char[] arrSymmetricKey = new char[1000];
+        int i=1;
+       
+        FileReader filein = null;
+        int next = 0;
+        int idx = 0;
+        
+       try {
+            // apre il file in lettura
+            filein = new FileReader(decryptedFile);
+            do {
+                try {
+                    next = filein.read(); // legge il prossimo carattere
+                } catch (IOException ex) {
+                    Logger.getLogger(keyRing.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                if (next == ',') { // se è un new line 
+                    idx += 1;
+                }
+                if (idx==4){
+                    char nextc = (char) next;
+                    arrSymmetricKey[i] = nextc;
+                    i++;
+                }
+                if (idx == 5){
+                    break;
+                }
+                                
+            } while (next != -1);
+            try {
+                filein.close(); // ch{iude il file
+            } catch (IOException ex) {
+                Logger.getLogger(keyRing.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(keyRing.class.getName()).log(Level.SEVERE, null, ex);
+        } finally {
+            try {
+                filein.close();
+            } catch (IOException ex) {
+                Logger.getLogger(keyRing.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+        return arrSymmetricKey;
+        
+    }
 	}
 }
