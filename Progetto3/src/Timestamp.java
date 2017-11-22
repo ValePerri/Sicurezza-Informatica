@@ -6,6 +6,9 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
 
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
+
 public class Timestamp {
 
 	public static void main(String[] args) throws Exception {
@@ -26,12 +29,13 @@ public class Timestamp {
 		char[] pubKeyb64enc = user.keyring.getPubKey("xc5qgswls95");
 		char[] prSignKeyb64enc = user.keyring.getSignPrKey("xc5qgswls95");
 		char[] pubSignKeyb64enc = user.keyring.getSignPubKey("xc5qgswls95");
+		char[] symmetricKeyb64enc = user.keyring.getSymmetricKey("xc5qgswls95");
 		
 		String p = new String(privateKeyBase64encoded);
 		String p1 = new String(pubKeyb64enc);
 		String p2 = new String(prSignKeyb64enc);
 		String p3 = new String(pubSignKeyb64enc);
-		
+		String p4 = new String(symmetricKeyb64enc);
 
 		//test recupero chiave privata RSA
 		byte[] decodedprKey = Base64.getMimeDecoder().decode(p);
@@ -48,6 +52,12 @@ public class Timestamp {
 		//test recupero chiave pubblica DSA
 		byte[] decodedpubsignKey = Base64.getMimeDecoder().decode(p3);
 		PublicKey publicsignKey = KeyFactory.getInstance("DSA").generatePublic(new X509EncodedKeySpec(decodedpubsignKey));
+		
+		//test recupero chiave simmetrica AES
+		byte[] decodedsymmetricKeyb64enc = Base64.getMimeDecoder().decode(p4);
+		SecretKey aesKey = new SecretKeySpec(decodedsymmetricKeyb64enc, "AES");
+		
+		
 	}
 
 }
